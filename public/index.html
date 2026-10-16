@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>Pregão da Turma — Simulador de Investimentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10241E;
+    --ink-2:#173229;
+    --paper:#F1ECDD;
+    --paper-2:#E8E1CC;
+    --brass:#C7A24C;
+    --brass-light:#E4C878;
+    --forest:#1F5C46;
+    --forest-light:#2C7A5C;
+    --rust:#A23E32;
+    --line:#D8CFB5;
+    --line-dark:#2A473C;
+    --ink-text:#1B2A22;
+  }
+  *{box-sizing:border-box;}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+  .banner{background:#7A3A2C;color:#fff;padding:10px 14px;border-radius:8px;margin:12px 0;font-size:13px;display:none;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app{max-width:920px;margin:0 auto;padding:20px 16px 60px;}
+
+  /* Header */
+  .masthead{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:2px solid var(--brass);
+    padding-bottom:14px;margin-bottom:6px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .masthead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,5vw,34px);
+    margin:0;letter-spacing:-0.01em;
+    color:var(--paper);
+  }
+  .masthead .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--brass-light);display:block;margin-bottom:2px;
+  }
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;padding:5px 12px;border-radius:100px;
+    border:1px solid var(--line-dark);white-space:nowrap;
+  }
+  .status-pill.open{color:#8FD9B6;border-color:#2C7A5C;background:rgba(44,122,92,0.15);}
+  .status-pill.closed{color:#E39B8F;border-color:#7A3A2C;background:rgba(162,62,50,0.15);}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;margin:18px 0 20px;}
+  .tab-btn{
+    flex:1;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.05em;
+    padding:10px 8px;border-radius:8px 8px 0 0;border:1px solid var(--line-dark);
+    border-bottom:none;background:var(--ink-2);color:var(--paper);opacity:0.55;
+    cursor:pointer;text-transform:uppercase;transition:opacity .15s, background .15s;
+  }
+  .tab-btn.active{opacity:1;background:var(--paper);color:var(--ink);}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .card{
+    background:var(--paper);color:var(--ink-text);
+    border-radius:10px;padding:18px;margin-bottom:16px;
+    border:1px solid var(--line);
+  }
+  .card h2{
+    font-family:'Fraunces',serif;font-size:19px;margin:0 0 12px;color:var(--ink-text);
+  }
+  label{font-size:12px;font-weight:600;color:#5A5340;display:block;margin-bottom:5px;letter-spacing:0.03em;text-transform:uppercase;}
+  select, input[type=number], input[type=text], input[type=password]{
+    width:100%;padding:10px 12px;border-radius:7px;border:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:15px;background:#fff;color:var(--ink-text);
+  }
+  .field{margin-bottom:14px;}
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+
+  /* buttons */
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+    padding:11px 18px;border-radius:8px;border:none;cursor:pointer;
+    transition:transform .08s, filter .15s;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--forest);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-brass{background:var(--brass);color:#25200E;}
+  .btn-brass:hover{filter:brightness(1.06);}
+  .btn-ghost{background:transparent;color:var(--ink-text);border:1px solid var(--line);}
+  .btn-danger{background:transparent;color:var(--rust);border:1px solid var(--rust);}
+  .btn-block{width:100%;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* Balance display */
+  .balance-box{
+    background:var(--ink);color:var(--paper);border-radius:10px;padding:18px 20px;
+    margin-bottom:16px;border:1px solid var(--line-dark);
+  }
+  .balance-box .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--brass-light);}
+  .balance-figure{font-family:'IBM Plex Mono',monospace;font-size:clamp(28px,7vw,40px);font-weight:600;margin:4px 0 10px;}
+  .gauge{height:8px;border-radius:100px;background:var(--line-dark);overflow:hidden;}
+  .gauge-fill{height:100%;background:linear-gradient(90deg,var(--forest-light),var(--brass));border-radius:100px;transition:width .3s ease;}
+  .gauge-labels{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B9AF8F;margin-top:6px;}
+
+  /* product row (student allocation) */
+  .product-row{border:1px solid var(--line);border-radius:9px;padding:13px 14px;margin-bottom:10px;background:#fff;}
+  .product-row .p-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;}
+  .product-row .p-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;margin-bottom:4px;}
+  .p-badge{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--forest);background:#E4EFE9;padding:3px 9px;border-radius:100px;}
+  .product-row label{margin-top:8px;}
+  .product-row .p-desc{font-size:13px;color:#635C46;margin:0 0 10px;line-height:1.4;}
+  .stepper{display:flex;gap:6px;align-items:center;}
+  .stepper input{text-align:center;font-weight:600;}
+  .chip-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .chip{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper-2);cursor:pointer;color:var(--ink-text);}
+  .chip:hover{background:var(--brass-light);}
+
+  /* dashboard board */
+  .board-row{margin-bottom:12px;}
+  .board-row .b-head{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-bottom:5px;}
+  .board-row .b-name{font-family:'Fraunces',serif;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .bar-track{height:22px;background:var(--paper-2);border-radius:5px;overflow:hidden;border:1px solid var(--line);}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--forest),var(--forest-light));display:flex;align-items:center;transition:width .5s ease;}
+  .board-row.winner .bar-fill{background:linear-gradient(90deg,var(--brass),var(--brass-light));}
+  .board-row.winner .b-name{color:var(--brass) ;}
+  .board-row.winner .b-name::after{content:" 🏆";}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  th{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#5A5340;}
+  td.num, th.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+
+  .empty-note{font-size:13px;color:#7A7460;font-style:italic;padding:10px 2px;}
+  .small-note{font-size:12px;color:#7A7460;margin-top:8px;}
+  .divider{border:none;border-top:1px solid var(--line);margin:16px 0;}
+  .list-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);gap:8px;}
+  .list-item:last-child{border-bottom:none;}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:100px;background:var(--paper-2);}
+  .gate{max-width:340px;margin:60px auto;}
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    background:var(--forest);color:#fff;padding:10px 20px;border-radius:100px;
+    font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,0.3);
+    opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+  h3.section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#8A8266;margin:0 0 10px;}
+
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(16,36,30,0.72);
+    align-items:center;justify-content:center;z-index:100;padding:16px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--paper);color:var(--ink-text);border-radius:12px;
+    padding:22px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  }
+  .modal-box h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .modal-actions .btn{flex:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="banner" id="noDbBanner">Sem conexão com o servidor. Verifique sua internet e recarregue a página.</div>
+
+  <div class="masthead">
+    <div>
+      <span class="eyebrow">Pregão da Turma</span>
+      <h1>Cofre de Investimentos</h1>
+    </div>
+    <div id="statusPill" class="status-pill closed">carregando…</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabAlunoBtn" onclick="switchTab('aluno')">Aluno</button>
+    <button class="tab-btn" id="tabProfBtn" onclick="switchTab('professor')">Professor</button>
+  </div>
+
+  <!-- ALUNO VIEW -->
+  <div class="view active" id="viewAluno">
+
+    <div class="card">
+      <h2>Escolha seu grupo</h2>
+      <div class="field">
+        <label>Grupo</label>
+        <select id="groupSelect" onchange="onGroupChange()">
+          <option value="">Selecione…</option>
+        </select>
+      </div>
+      <p class="small-note" id="groupHint">Cada grupo compartilha o mesmo cofre — combine as decisões com seu time antes de enviar.</p>
+    </div>
+
+    <div id="alunoContent" style="display:none;">
+      <div class="balance-box">
+        <span class="eyebrow">Saldo disponível para investir</span>
+        <div class="balance-figure" id="balanceFigure">R$ 0</div>
+        <div class="gauge"><div class="gauge-fill" id="gaugeFill" style="width:100%;"></div></div>
+        <div class="gauge-labels">
+          <span id="gaugeAllocated">Alocado: R$ 0</span>
+          <span id="gaugeTotal">Total: R$ 0</span>
+        </div>
+      </div>
+
+      <h3 class="section-label">Empresas em pitch</h3>
+      <div id="productsList"></div>
+
+      <div class="field" id="groupPasswordField" style="display:none;margin-top:14px;">
+        <label>Senha do grupo</label>
+        <input type="password" id="groupPasswordInput" placeholder="Digite a senha do grupo">
+      </div>
+      <button class="btn btn-primary btn-block" id="submitBtn" onclick="submitInvestments()">Confirmar investimentos do grupo</button>
+      <p class="small-note" id="lastSavedNote"></p>
+    </div>
+
+    <div id="noProductsNote" class="card" style="display:none;">
+      <p class="empty-note">O professor ainda não cadastrou as empresas do pitch. Aguarde o início da rodada.</p>
+    </div>
+  </div>
+
+  <!-- PROFESSOR VIEW -->
+  <div class="view" id="viewProfessor">
+
+    <div id="profGate" class="card gate">
+      <h2>Acesso do professor</h2>
+      <div class="field">
+        <label>PIN de acesso</label>
+        <input type="password" id="pinInput" placeholder="••••">
+      </div>
+      <button class="btn btn-brass btn-block" onclick="checkPin()">Entrar</button>
+      <p class="small-note">PIN padrão: 2026 (pode ser alterado depois de entrar).</p>
+    </div>
+
+    <div id="profPanel" style="display:none;">
+
+      <div class="card">
+        <h2>Acesso dos alunos (QR Code)</h2>
+        <div id="qrBox" style="display:flex;justify-content:center;padding:14px;background:#fff;border-radius:8px;"></div>
+        <div class="field" style="margin-top:12px;">
+          <label>Endereço da página</label>
+          <input type="text" id="qrUrl" oninput="renderQR()">
+        </div>
+        <p class="small-note">Projete este QR Code para a turma. Cada grupo só pode ser aberto em um aparelho por vez; se o aparelho fechar a página, o grupo é liberado em cerca de 30 segundos.</p>
+      </div>
+
+      <div class="card">
+        <h2>Configuração da rodada</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Saldo inicial por grupo (R$)</label>
+            <input type="number" id="initialBalanceInput" min="0" step="500">
+          </div>
+          <div class="field">
+            <label>Status da rodada</label>
+            <select id="roundStatusSelect">
+              <option value="closed">Fechada (edição/preparo)</option>
+              <option value="open">Aberta (alunos investem)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveConfigBasics()">Salvar configuração</button>
+
+        <hr class="divider">
+
+        <h3 class="section-label">Grupos (8 grupos de 5 alunos — 40 no total)</h3>
+        <div id="groupsListEl"></div>
+        <div class="row" style="margin-top:8px;">
+          <input type="text" id="newGroupInput" placeholder="Nome do novo grupo">
+          <input type="text" id="newGroupPassword" placeholder="Senha do grupo">
+          <button class="btn btn-ghost" onclick="addGroup()">Adicionar grupo</button>
+        </div>
+        <p class="small-note">A senha é digitada pelos alunos para confirmar o envio do investimento. Não é uma senha de alta segurança — serve para evitar que outro grupo mexa no cofre errado.</p>
+
+        <hr class="divider">
+
+        <h3 class="section-label">Empresas do pitch (5 a 10)</h3>
+        <div id="productsAdminList"></div>
+        <div class="field" style="margin-top:10px;">
+          <label>Nome da empresa</label>
+          <input type="text" id="newProductName" placeholder="Ex: EcoPack Embalagens">
+        </div>
+        <div class="field">
+          <label>Descrição curta (opcional)</label>
+          <input type="text" id="newProductDesc" placeholder="Ex: Embalagens biodegradáveis para delivery">
+        </div>
+        <button class="btn btn-ghost btn-block" onclick="addProduct()">Adicionar empresa</button>
+
+        <hr class="divider">
+        <div class="field">
+          <label>Alterar PIN do professor</label>
+          <div class="row">
+            <input type="text" id="newPinInput" placeholder="Novo PIN">
+            <button class="btn btn-ghost" onclick="changePin()">Salvar PIN</button>
+          </div>
+        </div>
+
+        <button class="btn btn-danger btn-block" style="margin-top:10px;" onclick="confirmResetAll()">Zerar toda a rodada (apaga investimentos)</button>
+      </div>
+
+      <div class="card">
+        <h2>Placar consolidado</h2>
+        <button class="btn btn-ghost" onclick="refreshDashboard()" style="margin-bottom:14px;">Atualizar agora</button>
+        <div id="productBoard"></div>
+        <div id="boardEmptyNote" class="empty-note" style="display:none;">Nenhum investimento registrado ainda.</div>
+        <button class="btn btn-brass btn-block" id="revealBtn" onclick="revealWinner()" style="margin-top:10px;">Revelar empresa vencedora</button>
+      </div>
+
+      <div class="card">
+        <h2>Movimentação por grupo</h2>
+        <table>
+          <thead><tr><th>Grupo</th><th class="num">Investido</th><th class="num">Saldo restante</th></tr></thead>
+          <tbody id="groupsTableBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+const API = '/api';
+async function api(body){
+  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+let profPin = null, lastClaimInv = {};
+const SID = (()=>{ try{ let v=localStorage.getItem('sid'); if(!v){ v='s'+Math.random().toString(36).slice(2); localStorage.setItem('sid',v);} return v; }catch(e){ return 's'+Math.random().toString(36).slice(2); } })();
+let heartbeat = null;
+async function claimGroup(id){
+  try{ const r = await api({action:'claim',groupId:id,sid:SID}); if(r.ok) lastClaimInv = r.investment||{}; return !!r.ok; }catch(e){ return false; }
+}
+
+let config = { groups: [], initialBalance: 10000, products: [], roundOpen: false, pin: "2026" };
+let investments = {}; // groupId -> {productId: amount}
+let currentGroup = null; // groupId
+let pendingAllocation = {}; // productId -> amount, working state for current student before submit
+let isProfAuthed = false;
+
+const DEFAULT_GROUPS = Array.from({length:8}, (_,i)=>({ id: 'g'+(i+1), name: `Grupo ${i+1}`, password: '' }));
+
+function groupById(id){ return config.groups.find(g=>g.id===id); }
+
+function fmtBRL(n){
+  n = Number(n)||0;
+  return "R$ " + n.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function uid(){ return 'p'+Math.random().toString(36).slice(2,9); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function loadConfig(){
+  try{
+    if(isProfAuthed){ const r = await api({action:'admin',pin:profPin,op:'get'}); if(r.ok){ config = r.config; investments = r.investments||{}; } }
+    else { const r = await api({action:'state'}); if(r.config) config = r.config; }
+    document.getElementById('noDbBanner').style.display='none';
+  }catch(e){ document.getElementById('noDbBanner').style.display='block'; }
+}
+async function loadAllInvestments(){}
+
+function switchTab(tab){
+  document.getElementById('tabAlunoBtn').classList.toggle('active', tab==='aluno');
+  document.getElementById('tabProfBtn').classList.toggle('active', tab==='professor');
+  document.getElementById('viewAluno').classList.toggle('active', tab==='aluno');
+  document.getElementById('viewProfessor').classList.toggle('active', tab==='professor');
+  if(tab==='professor' && isProfAuthed){ refreshDashboard(); }
+}
+
+function renderStatusPill(){
+  const el = document.getElementById('statusPill');
+  if(config.roundOpen){
+    el.textContent = 'Rodada aberta';
+    el.className = 'status-pill open';
+  } else {
+    el.textContent = 'Rodada fechada';
+    el.className = 'status-pill closed';
+  }
+}
+
+function populateGroupSelect(){
+  const sel = document.getElementById('groupSelect');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Selecione…</option>' +
+    config.groups.map(g=>`<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+  if(config.groups.some(g=>g.id===prev)) sel.value = prev;
+}
+
+async function onGroupChange(){
+  const sel = document.getElementById('groupSelect');
+  const id = sel.value || null;
+  clearInterval(heartbeat); heartbeat = null;
+  currentGroup = null; renderAlunoContent();
+  if(!id) return;
+  if(!(await claimGroup(id))){ showToast('Este grupo já está logado em outro aparelho.'); sel.value=''; return; }
+  currentGroup = id;
+  heartbeat = setInterval(async()=>{
+    if(!(await claimGroup(currentGroup))){ showToast('O login deste grupo foi perdido.'); sel.value=''; currentGroup=null; clearInterval(heartbeat); renderAlunoContent(); }
+  }, 12000);
+  const existing = lastClaimInv || {};
+  pendingAllocation = {};
+  config.products.forEach(p=>{ pendingAllocation[p.id] = existing[p.id] || 0; });
+  renderAlunoContent();
+}
+
+function totalAllocated(){
+  return Object.values(pendingAllocation).reduce((a,b)=>a+(Number(b)||0),0);
+}
+
+function renderAlunoContent(){
+  const hasProducts = config.products.length > 0;
+  document.getElementById('noProductsNote').style.display = (!hasProducts) ? 'block' : 'none';
+  document.getElementById('alunoContent').style.display = (currentGroup && hasProducts) ? 'block' : 'none';
+  if(!currentGroup || !hasProducts) return;
+
+  const total = config.initialBalance;
+  const allocated = totalAllocated();
+  const remaining = total - allocated;
+
+  document.getElementById('balanceFigure').textContent = fmtBRL(remaining);
+  document.getElementById('gaugeAllocated').textContent = 'Alocado: ' + fmtBRL(allocated);
+  document.getElementById('gaugeTotal').textContent = 'Total: ' + fmtBRL(total);
+  const pct = total>0 ? Math.max(0, Math.min(100, (remaining/total)*100)) : 0;
+  document.getElementById('gaugeFill').style.width = pct + '%';
+
+  const g = groupById(currentGroup);
+  document.getElementById('groupHint').textContent = g ? `Investindo em nome do ${g.name}.` : '';
+  document.getElementById('groupPasswordField').style.display = (g && (g.hasPassword || g.password)) ? 'block' : 'none';
+
+  const list = document.getElementById('productsList');
+  list.innerHTML = config.products.map((p,idx)=>{
+    const val = pendingAllocation[p.id] || 0;
+    return `
+    <div class="product-row">
+      <div class="p-head">
+        <span class="p-badge">Empresa ${idx+1}</span>
+      </div>
+      <div class="p-name">${escapeHtml(p.name)}</div>
+      ${p.desc ? `<p class="p-desc">${escapeHtml(p.desc)}</p>` : ''}
+      <label for="input-${p.id}">Valor investido em ${escapeHtml(p.name)}</label>
+      <div class="stepper">
+        <input id="input-${p.id}" type="number" min="0" step="100" value="${val}" data-pid="${p.id}" oninput="onAllocInput('${p.id}', this.value)" ${config.roundOpen? '' : 'disabled'}>
+      </div>
+      <div class="chip-row">
+        <span class="chip" onclick="quickAdd('${p.id}',500)">+500</span>
+        <span class="chip" onclick="quickAdd('${p.id}',1000)">+1.000</span>
+        <span class="chip" onclick="quickAdd('${p.id}',5000)">+5.000</span>
+        <span class="chip" onclick="setAlloc('${p.id}',0)">Zerar</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('submitBtn').disabled = !config.roundOpen;
+  const lastNote = document.getElementById('lastSavedNote');
+  if(!config.roundOpen){
+    lastNote.textContent = 'A rodada está fechada. Os valores abaixo são apenas o último envio registrado.';
+  } else {
+    lastNote.textContent = '';
+  }
+}
+
+function onAllocInput(pid, val){
+  pendingAllocation[pid] = Math.max(0, Number(val)||0);
+  renderAlunoContent();
+  restoreFocus(pid);
+}
+function quickAdd(pid, amount){
+  pendingAllocation[pid] = (Number(pendingAllocation[pid])||0) + amount;
+  renderAlunoContent();
+}
+function setAlloc(pid, val){
+  pendingAllocation[pid] = val;
+  renderAlunoContent();
+}
+function restoreFocus(pid){
+  const input = document.querySelector(`input[data-pid="${pid}"]`);
+  if(input){ input.focus(); const v=input.value; input.value=''; input.value=v; }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+async function submitInvestments(){
+  if(!currentGroup) return;
+  if(totalAllocated() > config.initialBalance){ showToast('O total alocado ultrapassa o saldo do grupo.'); return; }
+  const alloc = {};
+  config.products.forEach(p=>{ if(pendingAllocation[p.id] > 0) alloc[p.id] = pendingAllocation[p.id]; });
+  try{
+    const r = await api({action:'submit',groupId:currentGroup,sid:SID,password:document.getElementById('groupPasswordInput').value,alloc});
+    if(r.ok){ investments[currentGroup] = alloc; const g = groupById(currentGroup); showToast('Investimentos do '+(g?g.name:'grupo')+' salvos!'); }
+    else showToast(r.error || 'Erro ao salvar.');
+  }catch(e){ showToast('Erro de conexão.'); }
+}
+/* ---------- PROFESSOR ---------- */
+
+async function checkPin(){
+  const val = document.getElementById('pinInput').value;
+  let r = null;
+  try{ r = await api({action:'admin',pin:val,op:'get'}); }catch(e){}
+  if(r && r.ok){
+    profPin = val; isProfAuthed = true; config = r.config; investments = r.investments||{};
+    document.getElementById('profGate').style.display = 'none';
+    document.getElementById('profPanel').style.display = 'block';
+    renderProfConfig();
+    document.getElementById('qrUrl').value = location.href.split('#')[0];
+    renderQR();
+    refreshDashboard();
+  } else { showToast('PIN incorreto.'); }
+}
+function renderQR(){
+  const box = document.getElementById('qrBox'); box.innerHTML = '';
+  const url = document.getElementById('qrUrl').value.trim();
+  if(url && typeof QRCode !== 'undefined') new QRCode(box, {text:url, width:220, height:220});
+}
+
+function renderProfConfig(){
+  document.getElementById('initialBalanceInput').value = config.initialBalance;
+  document.getElementById('roundStatusSelect').value = config.roundOpen ? 'open' : 'closed';
+
+  const gList = document.getElementById('groupsListEl');
+  gList.innerHTML = config.groups.map(g=>`
+    <div class="list-item">
+      <span>${escapeHtml(g.name)} <span class="tag">${g.password ? 'Senha definida' : 'Sem senha'}</span></span>
+      <span>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="editGroup('${g.id}')">Editar</button>
+        <button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="removeGroup('${g.id}')">Remover</button>
+      </span>
+    </div>`).join('') || '<p class="empty-note">Nenhum grupo cadastrado.</p>';
+
+  const pList = document.getElementById('productsAdminList');
+  pList.innerHTML = config.products.map(p=>`
+    <div class="list-item">
+      <span><strong>${escapeHtml(p.name)}</strong>${p.desc ? ' — ' + escapeHtml(p.desc) : ''}</span>
+      <span>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="editProduct('${p.id}')">Editar</button>
+        <button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="removeProduct('${p.id}')">Remover</button>
+      </span>
+    </div>`).join('') || '<p class="empty-note">Nenhuma empresa cadastrada ainda.</p>';
+}
+
+async function persistConfig(){
+  if(isProfAuthed){
+    try{
+      const r = await api({action:'admin',pin:profPin,op:'save',config});
+      if(!r.ok) showToast('Erro ao salvar.');
+    }catch(e){ showToast('Erro de conexão.'); }
+    if(config.pin){ profPin = config.pin; delete config.pin; }
+  }
+  renderStatusPill(); populateGroupSelect();
+}
+async function saveConfigBasics(){
+  const bal = Number(document.getElementById('initialBalanceInput').value) || 0;
+  config.initialBalance = bal;
+  config.roundOpen = document.getElementById('roundStatusSelect').value === 'open';
+  await persistConfig();
+  showToast('Configuração salva.');
+  renderProfConfig();
+}
+
+async function addGroup(){
+  const input = document.getElementById('newGroupInput');
+  const passInput = document.getElementById('newGroupPassword');
+  const name = input.value.trim();
+  if(!name) return;
+  if(config.groups.some(g=>g.name===name)){ showToast('Esse grupo já existe.'); return; }
+  config.groups.push({ id: uid(), name, password: passInput.value.trim() });
+  input.value = '';
+  passInput.value = '';
+  await persistConfig();
+  renderProfConfig();
+}
+async function removeGroup(id){
+  config.groups = config.groups.filter(g=>g.id!==id);
+  await persistConfig();
+  renderProfConfig();
+}
+function openModal(html){
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modalBox').innerHTML = '';
+}
+
+function editGroup(id){
+  const g = groupById(id);
+  if(!g) return;
+  openModal(`
+    <h3>Editar grupo</h3>
+    <div class="field">
+      <label>Nome do grupo</label>
+      <input type="text" id="modalGroupName" value="${escapeHtml(g.name)}">
+    </div>
+    <div class="field">
+      <label>Senha do grupo (deixe vazio para não exigir senha)</label>
+      <input type="text" id="modalGroupPassword" value="${escapeHtml(g.password || '')}">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveGroupEdit('${id}')">Salvar</button>
+    </div>
+  `);
+}
+async function saveGroupEdit(id){
+  const g = groupById(id);
+  if(!g) return;
+  const name = document.getElementById('modalGroupName').value.trim();
+  if(!name){ showToast('O nome não pode ficar vazio.'); return; }
+  g.name = name;
+  g.password = document.getElementById('modalGroupPassword').value.trim();
+  await persistConfig();
+  renderProfConfig();
+  closeModal();
+  showToast('Grupo atualizado.');
+}
+
+function editProduct(id){
+  const p = config.products.find(x=>x.id===id);
+  if(!p) return;
+  openModal(`
+    <h3>Editar empresa</h3>
+    <div class="field">
+      <label>Nome da empresa</label>
+      <input type="text" id="modalProductName" value="${escapeHtml(p.name)}">
+    </div>
+    <div class="field">
+      <label>Descrição curta (opcional)</label>
+      <input type="text" id="modalProductDesc" value="${escapeHtml(p.desc || '')}">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProductEdit('${id}')">Salvar</button>
+    </div>
+  `);
+}
+async function saveProductEdit(id){
+  const p = config.products.find(x=>x.id===id);
+  if(!p) return;
+  const name = document.getElementById('modalProductName').value.trim();
+  if(!name){ showToast('O nome não pode ficar vazio.'); return; }
+  p.name = name;
+  p.desc = document.getElementById('modalProductDesc').value.trim();
+  await persistConfig();
+  renderProfConfig();
+  closeModal();
+  showToast('Empresa atualizada.');
+}
+
+function confirmResetAll(){
+  openModal(`
+    <h3>Zerar toda a rodada?</h3>
+    <p style="font-size:14px;line-height:1.5;">Isso vai apagar os investimentos registrados de todos os grupos. Os grupos e as empresas cadastradas continuam existindo. Essa ação não pode ser desfeita.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="doResetAll()">Sim, zerar tudo</button>
+    </div>
+  `);
+}
+
+async function addProduct(){
+  const nameEl = document.getElementById('newProductName');
+  const descEl = document.getElementById('newProductDesc');
+  const name = nameEl.value.trim();
+  if(!name) return;
+  if(config.products.length >= 10){ showToast('Máximo de 10 empresas.'); return; }
+  config.products.push({ id: uid(), name, desc: descEl.value.trim() });
+  nameEl.value=''; descEl.value='';
+  await persistConfig();
+  renderProfConfig();
+}
+async function removeProduct(id){
+  config.products = config.products.filter(p=>p.id!==id);
+  await persistConfig();
+  renderProfConfig();
+}
+
+async function changePin(){
+  const val = document.getElementById('newPinInput').value.trim();
+  if(!val) return;
+  config.pin = val;
+  await persistConfig();
+  document.getElementById('newPinInput').value = '';
+  showToast('PIN atualizado.');
+}
+
+async function doResetAll(){
+  closeModal();
+  try{ await api({action:'admin',pin:profPin,op:'reset'}); }catch(e){}
+  investments = {};
+  showToast('Rodada zerada.');
+  refreshDashboard();
+}
+async function refreshDashboard(){
+  await loadConfig();
+  if(isProfAuthed) await loadAllInvestments();
+  renderStatusPill();
+  populateGroupSelect();
+  if(currentGroup) renderAlunoContent();
+  if(!isProfAuthed) return;
+
+  // product totals
+  const totals = {};
+  config.products.forEach(p=>totals[p.id]=0);
+  Object.values(investments).forEach(alloc=>{
+    Object.entries(alloc).forEach(([pid,amt])=>{
+      if(totals[pid]===undefined) totals[pid]=0;
+      totals[pid]+= Number(amt)||0;
+    });
+  });
+  const maxTotal = Math.max(1, ...Object.values(totals));
+  const sortedProducts = [...config.products].sort((a,b)=> (totals[b.id]||0)-(totals[a.id]||0));
+
+  const board = document.getElementById('productBoard');
+  const anyInvestment = Object.values(totals).some(v=>v>0);
+  document.getElementById('boardEmptyNote').style.display = (config.products.length && !anyInvestment) ? 'block' : 'none';
+
+  board.innerHTML = sortedProducts.map(p=>{
+    const t = totals[p.id]||0;
+    const pct = (t/maxTotal)*100;
+    return `
+    <div class="board-row" data-pid="${p.id}">
+      <div class="b-head">
+        <span class="b-name">${escapeHtml(p.name)}</span>
+        <span>${fmtBRL(t)}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+    </div>`;
+  }).join('');
+
+  // groups table
+  const tbody = document.getElementById('groupsTableBody');
+  tbody.innerHTML = config.groups.map(g=>{
+    const alloc = investments[g.id] || {};
+    const invested = Object.values(alloc).reduce((a,b)=>a+(Number(b)||0),0);
+    const remaining = config.initialBalance - invested;
+    return `<tr><td>${escapeHtml(g.name)}</td><td class="num">${fmtBRL(invested)}</td><td class="num">${fmtBRL(remaining)}</td></tr>`;
+  }).join('');
+}
+
+function revealWinner(){
+  const rows = Array.from(document.querySelectorAll('.board-row'));
+  if(rows.length===0){ showToast('Nenhuma empresa cadastrada.'); return; }
+  rows.forEach(r=>r.classList.remove('winner'));
+  const winner = rows[0]; // already sorted desc by total
+  let i = 0;
+  const btn = document.getElementById('revealBtn');
+  btn.disabled = true;
+  const flicker = setInterval(()=>{
+    rows.forEach(r=>r.classList.remove('winner'));
+    rows[i % rows.length].classList.add('winner');
+    i++;
+    if(i > rows.length + 4){
+      clearInterval(flicker);
+      rows.forEach(r=>r.classList.remove('winner'));
+      winner.classList.add('winner');
+      winner.scrollIntoView({behavior:'smooth', block:'center'});
+      btn.disabled = false;
+    }
+  }, 140);
+}
+
+/* ---------- BOOT ---------- */
+async function boot(){
+  await loadConfig();
+  renderStatusPill();
+  populateGroupSelect();
+  renderAlunoContent();
+  setInterval(refreshDashboard, 5000);
+}
+boot();
+</script>
+</body>
+</html>
